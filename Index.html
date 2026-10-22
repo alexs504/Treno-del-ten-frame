@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'AUTOBUS DEL TEN FRAME - QUANTO MANCA A...?</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tone.js per effetti sonori didattici allegri senza file esterni -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <!-- Canvas Confetti per festeggiare le manche e la vittoria finale -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Grandstander:wght@700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Fredoka', cursive, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .font-fun {
+      font-family: 'Grandstander', cursive, sans-serif;
+    }
+
+    /* Animazione autobus che arriva da sinistra */
+    .bus-driving-in {
+      animation: driveIn 0.85s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+    }
+
+    /* Animazione autobus che parte felice */
+    .bus-driving-out {
+      animation: driveOut 0.85s cubic-bezier(0.5, 0, 0.8, 0.5) forwards;
+    }
+
+    @keyframes driveIn {
+      0% {
+        transform: translateX(-120%) scale(0.92);
+        opacity: 0.2;
+      }
+      75% {
+        transform: translateX(3%) scale(1.02);
+      }
+      100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes driveOut {
+      0% {
+        transform: translateX(0) scale(1);
+      }
+      25% {
+        transform: translateX(-3%) scale(0.98);
+      }
+      100% {
+        transform: translateX(130%) scale(1.05);
+      }
+    }
+
+    /* Rimbalzo dei gettoni sul Ten Frame */
+    @keyframes tokenDrop {
+      0% {
+        transform: scale(0) translateY(-35px);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1.18) translateY(3px);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .token-pop {
+      animation: tokenDrop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Pulsazione del bottone attivo */
+    .pulse-glow-coral {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: pulseCoral 1.4s infinite;
+    }
+    @keyframes pulseCoral {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 16px rgba(239, 68, 68, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    .pulse-glow-teal {
+      box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+      animation: pulseTeal 1.4s infinite;
+    }
+    @keyframes pulseTeal {
+      0% {
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 16px rgba(14, 165, 233, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+      }
+    }
+
+    @keyframes wheelRoll {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .wheel-spinning {
+      animation: wheelRoll 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-amber-100 min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4">
+
+  <header class="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-5 py-3 rounded-3xl shadow-xl border-4 border-amber-300">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-3xl shadow-inner border-2 border-amber-500">
+        🚌
+      </div>
+      <div>
+        <h1 class="font-fun text-xl sm:text-2xl text-amber-600 font-extrabold tracking-wide drop-shadow-sm leading-tight">
+          L'AUTOBUS DEL TEN FRAME
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 font-bold">
+          QUANTO MANCA AL PRIMO NUMERO PER ARRIVARE AL SECONDO?
+        </p>
+      </div>
+    </div>
+
+    <!-- Indicatori Manche e Punti -->
+    <div class="flex items-center gap-3">
+      <div class="bg-amber-100 border-2 border-amber-400 px-3.5 py-1.5 rounded-2xl flex flex-col items-center">
+        <span class="text-[10px] text-amber-800 font-bold">MANCHE</span>
+        <span id="roundCounter" class="text-base sm:text-lg font-black text-amber-900">1 / 15</span>
+      </div>
+
+      <div class="bg-emerald-100 border-2 border-emerald-400 px-3.5 py-1.5 rounded-2xl flex flex-col items-center">
+        <span class="text-[10px] text-emerald-800 font-bold">LIVELLO</span>
+        <span id="levelBadge" class="text-xs sm:text-sm font-black text-emerald-800">CAMPIONE</span>
+      </div>
+
+      <button id="soundToggleBtn" class="bg-sky-100 hover:bg-sky-200 border-2 border-sky-400 w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-transform active:scale-90" title="ATTIVA/DISATTIVA SUONI">
+        🔊
+      </button>
+    </div>
+  </header>
+
+  <!-- Box Istruzioni Dinamiche in Stampato Maiuscolo -->
+  <div class="w-full max-w-5xl mx-auto my-2">
+    <div id="instructionCard" class="bg-white/95 rounded-2xl p-3 sm:p-4 text-center border-4 border-indigo-300 shadow-lg transition-all duration-300">
+      <div id="instructionText" class="font-fun text-base sm:text-xl font-bold text-indigo-900 tracking-wide">
+        PREMI IL PULSANTE VERDE PER FAR ARRIVARE L'AUTOBUS!
+      </div>
+      <div id="subInstructionText" class="text-xs sm:text-sm font-bold text-indigo-600 mt-0.5">
+        LEGGI LE DUE CIFRE SULLA PORTIERA E CONTA I FINESTRINI SENZA NUMERI!
+      </div>
+    </div>
+  </div>
+
+  <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 my-2 relative">
+    
+    <!-- AREA STRADA E AUTOBUS -->
+    <div class="w-full lg:w-3/4 flex flex-col items-center relative py-4">
+      
+      <!-- L'Autobus Scuolabus -->
+      <div id="busContainer" class="w-full max-w-2xl bg-amber-400 border-8 border-amber-500 rounded-[44px] rounded-r-[56px] p-4 sm:p-6 shadow-2xl relative transition-transform duration-500">
+        
+        <!-- Sagoma e cartello dell'autobus -->
+        <div class="absolute -top-4 left-10 bg-amber-500 text-white text-xs px-3 py-1 rounded-full border-2 border-white font-black shadow">
+          SCUOLA PRIMARIA 1ª
+        </div>
+
+        <!-- Fari anteriori destri -->
+        <div class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-16 bg-white border-2 border-amber-600 rounded-r-xl shadow-md"></div>
+        <div class="absolute -right-2 top-1/2 -translate-y-1/2 w-3 h-10 bg-amber-200 rounded-r-lg blur-[2px]"></div>
+
+        <!-- Sezione superiore: Autista + TARGA CON NUMERI IN CIFRA ESTRATTI -->
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div class="bg-cyan-100 border-4 border-cyan-400 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+            <span class="text-2xl sm:text-3xl">🦊</span>
+            <div class="text-[11px] font-black text-cyan-900 leading-tight">
+              AUTISTA<br><span class="text-amber-700">VOLPINA</span>
+            </div>
+          </div>
+
+          <!-- TARGA CON I DUE NUMERI IN CIFRA ESTRATTI A SORTE -->
+          <div class="bg-white border-4 border-slate-800 rounded-2xl px-4 sm:px-6 py-2 shadow-md flex items-center gap-3 sm:gap-5">
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-black text-rose-600">1° NUMERO</span>
+              <div id="firstDigitBadge" class="w-12 h-12 sm:w-14 sm:h-14 bg-rose-500 text-white rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-black shadow-md border-2 border-white">
+                ?
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center">
+              <span class="text-xs font-black text-slate-400">QUANTO MANCA?</span>
+              <div class="text-slate-700 font-black text-2xl sm:text-3xl leading-none">➔</div>
+            </div>
+
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-black text-sky-600">2° NUMERO</span>
+              <div id="secondDigitBadge" class="w-12 h-12 sm:w-14 sm:h-14 bg-sky-500 text-white rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-black shadow-md border-2 border-white">
+                ?
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEN FRAME: I 10 FINESTRINI SENZA ALCUN NUMERO SCRITTO -->
+        <div class="bg-slate-900/10 p-3 sm:p-4 rounded-3xl border-4 border-amber-600/30">
+          <div class="text-center text-amber-900 font-extrabold text-xs mb-1.5 flex items-center justify-center gap-2">
+            <span>🪟 TEN FRAME: 10 FINESTRINI (5 IN ALTO + 5 IN BASSO) 🪟</span>
+          </div>
+
+          <!-- Griglia 10 frame: 5 colonne, 2 righe standard Montessori/didattica -->
+          <div id="tenFrameGrid" class="grid grid-cols-5 gap-2 sm:gap-3 bg-cyan-50/90 p-3 sm:p-4 rounded-2xl border-4 border-cyan-400 shadow-inner">
+            <!-- I 10 finestrini vuoti generati dinamicamente SENZA NUMERI -->
+          </div>
+        </div>
+
+        <!-- Ruote del Bus posizionate in basso -->
+        <div class="absolute -bottom-6 left-12 w-14 h-14 sm:w-16 sm:h-16 bg-slate-800 border-4 border-slate-950 rounded-full flex items-center justify-center shadow-2xl wheel-el">
+          <div class="w-6 h-6 bg-slate-400 rounded-full border-2 border-white flex items-center justify-center">
+            <div class="w-2 h-2 bg-slate-800 rounded-full"></div>
+          </div>
+        </div>
+
+        <div class="absolute -bottom-6 right-16 w-14 h-14 sm:w-16 sm:h-16 bg-slate-800 border-4 border-slate-950 rounded-full flex items-center justify-center shadow-2xl wheel-el">
+          <div class="w-6 h-6 bg-slate-400 rounded-full border-2 border-white flex items-center justify-center">
+            <div class="w-2 h-2 bg-slate-800 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asfalto stilizzato -->
+      <div class="w-full h-8 bg-slate-600 rounded-2xl mt-8 relative overflow-hidden flex items-center justify-around border-t-4 border-slate-700 shadow-lg">
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+        <div class="w-12 h-2 bg-amber-300 rounded-full"></div>
+      </div>
+    </div>
+
+    <!-- SCATOLA DEI GETTONI A DESTRA -->
+    <div class="w-full lg:w-1/4 flex flex-col items-center">
+      <div class="w-full max-w-xs bg-amber-100 border-4 border-amber-400 rounded-3xl p-4 shadow-xl flex flex-col items-center gap-3">
+        
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📦</span>
+          <h2 class="font-fun text-sm sm:text-base font-black text-amber-900 text-center">
+            SCATOLA DEI GETTONI
+          </h2>
+        </div>
+        <p class="text-[11px] text-amber-800 font-bold text-center leading-tight">
+          TOCCA IL GETTONE PER INSERIRLO NEI FINESTRINI DEL BUS!
+        </p>
+
+        <!-- Sezione 1: Gettone del Primo Colore (Rosso Corallo) SENZA NUMERI -->
+        <div class="w-full bg-white/90 p-3 rounded-2xl border-2 border-rose-300 flex flex-col items-center gap-2 shadow-sm">
+          <div class="flex items-center justify-between w-full px-1">
+            <span class="text-xs font-black text-rose-600">1° COLORE:</span>
+            <span id="firstColorCountLabel" class="text-xs font-black bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg flex items-center gap-1"></span>
+          </div>
+
+          <!-- Gettone interattivo liscio SENZA CIFRE -->
+          <button id="coralTokenBtn" disabled class="w-20 h-20 rounded-full bg-gradient-to-tr from-rose-600 to-rose-400 border-4 border-white shadow-lg flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:scale-90 disabled:cursor-not-allowed">
+            <div class="w-12 h-12 rounded-full border-2 border-dashed border-rose-200 bg-rose-500/50 shadow-inner"></div>
+          </button>
+          <span class="text-[10px] font-extrabold text-rose-500">GETTONE ROSSO</span>
+        </div>
+
+        <!-- Sezione 2: Gettone del Secondo Colore (Blu Oceano) SENZA NUMERI -->
+        <div class="w-full bg-white/90 p-3 rounded-2xl border-2 border-sky-300 flex flex-col items-center gap-2 shadow-sm">
+          <div class="flex items-center justify-between w-full px-1">
+            <span class="text-xs font-black text-sky-600">QUANTO MANCA:</span>
+            <span id="secondColorCountLabel" class="text-xs font-black bg-sky-100 text-sky-700 px-2 py-0.5 rounded-lg flex items-center gap-1"></span>
+          </div>
+
+          <!-- Gettone interattivo liscio SENZA CIFRE -->
+          <button id="blueTokenBtn" disabled class="w-20 h-20 rounded-full bg-gradient-to-tr from-sky-600 to-sky-400 border-4 border-white shadow-lg flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:scale-90 disabled:cursor-not-allowed">
+            <div class="w-12 h-12 rounded-full border-2 border-dashed border-sky-200 bg-sky-500/50 shadow-inner"></div>
+          </button>
+          <span class="text-[10px] font-extrabold text-sky-500">GETTONE BLU</span>
+        </div>
+
+        <!-- Pulsante Annulla Ultimo Gettone per autocorrezione -->
+        <button id="undoBtn" disabled class="w-full py-2 bg-amber-200 hover:bg-amber-300 disabled:opacity-40 disabled:cursor-not-allowed text-amber-900 rounded-xl font-bold text-xs border border-amber-400 flex items-center justify-center gap-1.5 transition-all">
+          <span>↩️</span>
+          <span>ANNULLA ULTIMO GETTONE</span>
+        </button>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Pulsante Avvia / Procedi -->
+  <footer class="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 my-2">
+    <button id="mainActionBtn" class="font-fun bg-emerald-500 hover:bg-emerald-600 text-white text-lg sm:text-xl font-black px-8 py-3.5 rounded-3xl shadow-xl border-4 border-white transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3">
+      <span>🚀</span>
+      <span id="mainActionBtnText">FAI ARRIVARE L'AUTOBUS!</span>
+    </button>
+    <button id="checkAnswerBtn" class="font-fun bg-amber-500 hover:bg-amber-600 text-white text-lg sm:text-xl font-black px-8 py-3.5 rounded-3xl shadow-xl border-4 border-white transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 hidden">
+      <span>✅</span>
+      <span>CONFERMA LA TUA RISPOSTA!</span>
+    </button>
+  </footer>
+
+  <!-- Modal di Errore / Suggerimento Costruttivo -->
+  <div id="retryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-[36px] border-8 border-rose-400 p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl transform transition-all scale-100 flex flex-col items-center">
+      <div class="text-6xl mb-2 animate-bounce">🧐</div>
+      <h3 class="font-fun text-2xl sm:text-3xl font-black text-rose-600 mb-2">
+        RICONTROLLIAMO INSIEME!
+      </h3>
+      <div id="retryExplanation" class="text-sm sm:text-base font-bold text-slate-700 bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 my-3 w-full leading-relaxed">
+      </div>
+      <p class="text-xs sm:text-sm font-extrabold text-slate-500 mb-4">
+        USA IL TASTO "ANNULLA ULTIMO GETTONE" O AGGIUNGI QUELLI CHE MANCANO!
+      </p>
+      <button id="retryCloseBtn" class="font-fun bg-rose-500 hover:bg-rose-600 text-white text-lg font-black px-8 py-3 rounded-2xl shadow-lg border-2 border-white transition-transform active:scale-95">
+        HO CAPITO, CORREGGO! ✏️
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal di Congratulazioni e Spiegazione Quantitativa -->
+  <div id="celebrationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-[36px] border-8 border-amber-400 p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl transform transition-all scale-100 flex flex-col items-center">
+      <div id="modalEmoji" class="text-6xl mb-2 animate-bounce">🌟</div>
+      
+      <h3 id="modalTitle" class="font-fun text-2xl sm:text-3xl font-black text-amber-600 mb-2">
+        SPLENDIDO LAVORO!
+      </h3>
+      
+      <!-- Sintesi chiara con numeri ed evidenza visiva -->
+      <div id="modalSummaryFormula" class="bg-amber-50 border-4 border-amber-300 rounded-2xl p-4 my-3 w-full text-lg sm:text-xl font-black text-slate-800 flex items-center justify-center gap-2 flex-wrap">
+      </div>
+
+      <p id="modalExplanation" class="text-sm sm:text-base font-bold text-slate-600 mb-5 leading-snug">
+      </p>
+
+      <button id="modalNextBtn" class="font-fun bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-black px-8 py-3.5 rounded-3xl shadow-lg border-4 border-white transition-transform active:scale-95">
+        CONTINUA IL VIAGGIO! ➔
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       PROGRESSIONE DIDATTICA: 15 MANCHE A DIFFICOLTÀ CRESCENTE E SFIDANTE
+       - Nessuna combinazione banale di partenza (+1 rimosso fin dall'inizio)
+       - Attraversamento frequente della cinquina (5) e lavoro sugli amici del 10
+       - I numeri estratti compaiono in cifra sulla targa
+       - Nessun numero sui finestrini o sui gettoni
+       ========================================================================== */
+    const GAME_ROUNDS = [
+      // FASE 1: LIVELLO INTERMEDIO SUBITO SFIDANTE (Salti da 3 a 5, non banali)
+      { num1: 2, num2: 6, level: "AVVENTURA", hint: "SALTO OLTRE LA PRIMA RIGA!" },
+      { num1: 3, num2: 7, level: "AVVENTURA", hint: "RIEMPI LA PRIMA RIGA E POI SOTTO!" },
+      { num1: 1, num2: 6, level: "AVVENTURA", hint: "DAL PRIMO GETTONE ALLA SECONDA FILA!" },
+      { num1: 4, num2: 8, level: "AVVENTURA", hint: "CONFRONTA I DUE NUMERI IN CIFRA!" },
+      { num1: 2, num2: 7, level: "AVVENTURA", hint: "DA 2 A 7: QUANTI GETTONI BLU MANCANO?" },
+
+      // FASE 2: LIVELLO ESPERTO (Completamento della cinquina e ampi dislivelli)
+      { num1: 3, num2: 8, level: "ESPERTO", hint: "OSSERVA I POSTI VUOTI SUL BUS!" },
+      { num1: 1, num2: 7, level: "ESPERTO", hint: "GRANDE SALTO! CONTA CON PRECISIONE!" },
+      { num1: 4, num2: 9, level: "ESPERTO", hint: "QUASI TUTTO IL BUS PIENO!" },
+      { num1: 5, num2: 9, level: "ESPERTO", hint: "TUTTA LA RIGA DI SOPRA È GIÀ ROSSA!" },
+      { num1: 2, num2: 8, level: "ESPERTO", hint: "DA 2 A 8: SERVE UN BEL GRUPPO DI GETTONI!" },
+
+      // FASE 3: LIVELLO CAMPIONE (Amici del 10 e grandi sfide per l'intero Ten Frame)
+      { num1: 6, num2: 10, level: "SUPER SFIDA", hint: "AMICI DEL 10: QUANTI PER IL BUS COMPLETO?" },
+      { num1: 4, num2: 10, level: "SUPER SFIDA", hint: "COMPLETA TUTTI E 10 I FINESTRINI!" },
+      { num1: 5, num2: 10, level: "CAMPIONI", hint: "METÀ BUS È ROSSO! E L'ALTRA METÀ?" },
+      { num1: 3, num2: 10, level: "CAMPIONI", hint: "SFIDA DEI GRANDI: DA 3 A 10!" },
+      { num1: 1, num2: 10, level: "GRAN FINALE", hint: "MASSIMA SFIDA: DA 1 FINO A RIEMPIRE IL BUS!" }
+    ];
+
+    /* Feedback motivazionali positivi per prima primaria */
+    const POSITIVE_PRAISES = [
+      "ECCELLENTE! HAI CONTATO ALLA PERFEZIONE!",
+      "CHE CAMPIONE! RAGIONAMENTO MAGNIFICO!",
+      "SUPERLATIVO! L'AUTOBUS È PRONTO A PARTIRE!",
+      "BRAVISSIMO! SEI UN VERO MAGO DEL TEN FRAME!",
+      "FANTASTICO! HAI TROVATO TUTTI I GETTONI MANCANTI!",
+      "COLPO D'OCCHIO STRAORDINARIO!",
+      "UN LAVORO DA VERO MATEMATICO ESPERTO!"
+    ];
+
+    /* STATO DEL GIOCO */
+    let currentRoundIndex = 0;
+    let roundActive = false;
+    let currentStep = "IDLE";
+    let placedTokens = []; // Array di stringhe: 'coral' | 'blue'
+    let soundEnabled = true;
+
+    /* ELEMENTI DOM */
+    const busContainer = document.getElementById('busContainer');
+    const tenFrameGrid = document.getElementById('tenFrameGrid');
+    const firstDigitBadge = document.getElementById('firstDigitBadge');
+    const secondDigitBadge = document.getElementById('secondDigitBadge');
+    const instructionText = document.getElementById('instructionText');
+    const subInstructionText = document.getElementById('subInstructionText');
+    const coralTokenBtn = document.getElementById('coralTokenBtn');
+    const blueTokenBtn = document.getElementById('blueTokenBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const firstColorCountLabel = document.getElementById('firstColorCountLabel');
+    const secondColorCountLabel = document.getElementById('secondColorCountLabel');
+    const mainActionBtn = document.getElementById('mainActionBtn');
+    const mainActionBtnText = document.getElementById('mainActionBtnText');
+    const checkAnswerBtn = document.getElementById('checkAnswerBtn');
+    const retryModal = document.getElementById('retryModal');
+    const retryExplanation = document.getElementById('retryExplanation');
+    const retryCloseBtn = document.getElementById('retryCloseBtn');
+    const roundCounter = document.getElementById('roundCounter');
+    const levelBadge = document.getElementById('levelBadge');
+    const celebrationModal = document.getElementById('celebrationModal');
+    const modalEmoji = document.getElementById('modalEmoji');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSummaryFormula = document.getElementById('modalSummaryFormula');
+    const modalExplanation = document.getElementById('modalExplanation');
+    const modalNextBtn = document.getElementById('modalNextBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const wheels = document.querySelectorAll('.wheel-el');
+
+    /* Helper: crea pallini per i contatori della scatola dei gettoni */
+    function renderMiniDotsCounter(container, filled, total, dotColor) {
+      container.innerHTML = '';
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement('span');
+        if (i < filled) {
+          dot.className = `inline-block w-2.5 h-2.5 rounded-full ${dotColor} shadow-sm`;
+        } else {
+          dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-slate-300 border border-slate-400';
+        }
+        container.appendChild(dot);
+      }
+      // Se l'alunno ha inserito più gettoni di quelli previsti per quel colore, mostra pallini di avviso
+      if (filled > total) {
+        for (let j = 0; j < (filled - total); j++) {
+          const extraDot = document.createElement('span');
+          extraDot.className = `inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-rose-400 animate-pulse`;
+          container.appendChild(extraDot);
+        }
+      }
+    }
+
+    /* ==========================================================================
+       GESTIONE AUDIO CON TONE.JS
+       ========================================================================== */
+    let synth;
+
+    function initAudio() {
+      if (!synth && typeof Tone !== 'undefined') {
+        synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "triangle" },
+          envelope: { attack: 0.01, decay: 0.15, sustain: 0.1, release: 0.3 }
+        }).toDestination();
+        synth.volume.value = -6;
+      }
+    }
+
+    function playNote(note, duration = "8n") {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        synth.triggerAttackRelease(note, duration);
+      } catch (e) {}
+    }
+
+    function playSuccessFanfare() {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const now = Tone.now();
+        synth.triggerAttackRelease("C5", "8n", now);
+        synth.triggerAttackRelease("E5", "8n", now + 0.12);
+        synth.triggerAttackRelease("G5", "8n", now + 0.24);
+        synth.triggerAttackRelease("C6", "4n", now + 0.38);
+      } catch (e) {}
+    }
+
+    function playBusHorn() {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const now = Tone.now();
+        synth.triggerAttackRelease("F4", "16n", now);
+        synth.triggerAttackRelease("A4", "16n", now + 0.1);
+        synth.triggerAttackRelease("F4", "8n", now + 0.2);
+      } catch (e) {}
+    }
+
+    function playTryAgainSound() {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const now = Tone.now();
+        synth.triggerAttackRelease("D4", "8n", now);
+        synth.triggerAttackRelease("A3", "4n", now + 0.14);
+      } catch (e) {}
+    }
+
+    /* ==========================================================================
+       COSTRUZIONE INTERFACCIA TEN FRAME (SENZA NUMERI SCRITTI SUI FINESTRINI)
+       ========================================================================== */
+    function renderTenFrameSlots() {
+      tenFrameGrid.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const slot = document.createElement('div');
+        // Nessun numero all'interno: puro spazio per il conteggio quantitativo
+        slot.className = 'slot relative h-14 sm:h-16 rounded-2xl bg-white/95 border-3 border-dashed border-cyan-400 flex items-center justify-center shadow-sm transition-all duration-200 overflow-hidden';
+        slot.setAttribute('data-index', i);
+
+        // Cerchietto delicato come guida visiva per il posizionamento spaziale
+        const centerGuide = document.createElement('div');
+        centerGuide.className = 'w-4 h-4 rounded-full bg-cyan-200/50 pointer-events-none';
+        slot.appendChild(centerGuide);
+
+        tenFrameGrid.appendChild(slot);
+      }
+    }
+
+    /* Rende visibile un gettone sul ten frame (SENZA ALCUN NUMERO SUL GETTONE) */
+    function refreshTenFrameVisuals() {
+      const slots = tenFrameGrid.querySelectorAll('.slot');
+      slots.forEach((slot, idx) => {
+        const oldToken = slot.querySelector('.token-circle');
+        if (oldToken) oldToken.remove();
+
+        if (idx < placedTokens.length) {
+          const type = placedTokens[idx];
+          const tokenDiv = document.createElement('div');
+          // Gettone pulito, liscio e bombato, rigorosamente privo di cifre
+          tokenDiv.className = `token-circle w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center shadow-lg border-2 border-white token-pop ${
+            type === 'coral' 
+              ? 'bg-gradient-to-tr from-rose-600 via-rose-500 to-rose-400' 
+              : 'bg-gradient-to-tr from-sky-600 via-sky-500 to-sky-400'
+          }`;
+          
+          // Riflesso tridimensionale interno lucido
+          const reflection = document.createElement('div');
+          reflection.className = 'w-4 h-4 rounded-full bg-white/35 -translate-x-1.5 -translate-y-1.5 pointer-events-none';
+          tokenDiv.appendChild(reflection);
+
+          slot.appendChild(tokenDiv);
+          slot.classList.remove('border-dashed', 'border-cyan-400');
+          slot.classList.add('border-solid', type === 'coral' ? 'border-rose-400' : 'border-sky-400');
+        } else {
+          slot.classList.add('border-dashed', 'border-cyan-400');
+          slot.classList.remove('border-solid', 'border-rose-400', 'border-sky-400');
+        }
+      });
+
+      // Aggiorna indicatori visivi della scatola dei gettoni a destra
+      const round = GAME_ROUNDS[currentRoundIndex];
+      if (round) {
+        const coralCount = placedTokens.filter(t => t === 'coral').length;
+        const blueCount = placedTokens.filter(t => t === 'blue').length;
+        const blueNeeded = round.num2 - round.num1;
+
+        renderMiniDotsCounter(firstColorCountLabel, coralCount, round.num1, 'bg-rose-500');
+        renderMiniDotsCounter(secondColorCountLabel, blueCount, blueNeeded, 'bg-sky-500');
+      }
+
+      undoBtn.disabled = placedTokens.length === 0 || currentStep === "SOLVED";
+    }
+
+    /* ==========================================================================
+       GESTIONE DELLE FASI DI GIOCO
+       ========================================================================== */
+    function startNewRound() {
+      if (currentRoundIndex >= GAME_ROUNDS.length) {
+        showFinalVictory();
+        return;
+      }
+
+      roundActive = true;
+      placedTokens = [];
+      const round = GAME_ROUNDS[currentRoundIndex];
+
+      roundCounter.textContent = `${currentRoundIndex + 1} / ${GAME_ROUNDS.length}`;
+      levelBadge.textContent = round.level;
+
+      // Mostra i numeri in CIFRA estratti a sorte sulla targa della portiera
+      firstDigitBadge.textContent = round.num1;
+      secondDigitBadge.textContent = round.num2;
+
+      // Animazione arrivo autobus
+      wheels.forEach(w => w.classList.add('wheel-spinning'));
+      busContainer.classList.remove('bus-driving-out');
+      busContainer.classList.add('bus-driving-in');
+      playBusHorn();
+
+      setTimeout(() => {
+        wheels.forEach(w => w.classList.remove('wheel-spinning'));
+        busContainer.classList.remove('bus-driving-in');
+      }, 900);
+
+      renderTenFrameSlots();
+      refreshTenFrameVisuals();
+
+      // Passaggio al gioco: il bambino può gestire liberamente i gettoni
+      currentStep = "PLAYING";
+      coralTokenBtn.disabled = false;
+      coralTokenBtn.classList.add('pulse-glow-coral');
+      // Anche il tasto blu è subito selezionabile quando il bambino decide di passare al secondo colore
+      blueTokenBtn.disabled = false;
+      blueTokenBtn.classList.remove('pulse-glow-teal');
+
+      mainActionBtn.classList.add('hidden');
+      checkAnswerBtn.classList.remove('hidden');
+
+      instructionText.textContent = `METTI I GETTONI ROSSI PER IL 1° NUMERO (${round.num1}), POI I BLU PER ARRIVARE AL 2° NUMERO (${round.num2})!`;
+      subInstructionText.textContent = "QUANDO PENSI DI AVER FINITO, PREMI IL PULSANTE GIALLO 'CONFERMA LA TUA RISPOSTA'!";
+    }
+
+    /* Aggiunta gettone rosso */
+    function handleAddCoralToken() {
+      if (currentStep !== "PLAYING") return;
+      if (placedTokens.length >= 10) {
+        instructionText.textContent = "IL TEN FRAME È PIENO! NON CI STANNO PIÙ GETTONI!";
+        return;
+      }
+
+      // Regola didattica intuitiva: i gettoni rossi vanno inseriti prima di quelli blu
+      const blueCount = placedTokens.filter(t => t === 'blue').length;
+      if (blueCount > 0) {
+        instructionText.textContent = "HAI GIÀ INIZIATO A METTERE I GETTONI BLU! PER METTERE ALTRI ROSSI USA 'ANNULLA'!";
+        return;
+      }
+
+      placedTokens.push('coral');
+      const scaleNotes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5"];
+      playNote(scaleNotes[placedTokens.length - 1] || "G4");
+      refreshTenFrameVisuals();
+
+      const round = GAME_ROUNDS[currentRoundIndex];
+      const coralCount = placedTokens.filter(t => t === 'coral').length;
+
+      if (coralCount === round.num1) {
+        coralTokenBtn.classList.remove('pulse-glow-coral');
+        blueTokenBtn.classList.add('pulse-glow-teal');
+        instructionText.textContent = `OTTIMO! ORA AGGIUNGI I GETTONI BLU FINO AD ARRIVARE AL SECONDO NUMERO: ${round.num2}!`;
+      }
+    }
+
+    /* Aggiunta gettone blu: quanto manca per arrivare alla seconda cifra */
+    function handleAddBlueToken() {
+      if (currentStep !== "PLAYING") return;
+      if (placedTokens.length >= 10) {
+        instructionText.textContent = "IL TEN FRAME È PIENO! NON CI STANNO PIÙ DI 10 GETTONI!";
+        return;
+      }
+
+      const coralCount = placedTokens.filter(t => t === 'coral').length;
+      if (coralCount === 0) {
+        instructionText.textContent = "PRIMA DEVI METTERE I GETTONI ROSSI INDICATI DAL PRIMO NUMERO SULLA PORTIERA!";
+        return;
+      }
+
+      placedTokens.push('blue');
+      const scaleNotes = ["C5", "D5", "E5", "F5", "G5", "A5", "B5", "C6"];
+      const blueCount = placedTokens.filter(t => t === 'blue').length;
+      playNote(scaleNotes[blueCount - 1] || "A5");
+      refreshTenFrameVisuals();
+    }
+
+    /* Annulla ultimo gettone inserito */
+    function handleUndoToken() {
+      if (placedTokens.length === 0 || currentStep === "SOLVED") return;
+      
+      placedTokens.pop();
+      playNote("G3", "16n");
+      refreshTenFrameVisuals();
+
+      const coralCount = placedTokens.filter(t => t === 'coral').length;
+      const blueCount = placedTokens.filter(t => t === 'blue').length;
+      const round = GAME_ROUNDS[currentRoundIndex];
+
+      if (blueCount === 0) {
+        blueTokenBtn.classList.remove('pulse-glow-teal');
+        if (coralCount < round.num1) {
+          coralTokenBtn.classList.add('pulse-glow-coral');
+        }
+      }
+      instructionText.textContent = `HAI TOLTO UN GETTONE. CONTA I FINESTRINI E CONTINUA!`;
+    }
+
+    /* VERIFICA ATTIVA DELLA RISPOSTA (Pulsante Conferma) */
+    function handleCheckAnswer() {
+      if (currentStep !== "PLAYING") return;
+
+      const round = GAME_ROUNDS[currentRoundIndex];
+      const coralCount = placedTokens.filter(t => t === 'coral').length;
+      const blueCount = placedTokens.filter(t => t === 'blue').length;
+      const totalCount = placedTokens.length;
+      const correctDifference = round.num2 - round.num1;
+
+      // Caso 1: Nessun gettone o mancano i gettoni rossi
+      if (coralCount !== round.num1) {
+        playTryAgainSound();
+        if (coralCount < round.num1) {
+          retryExplanation.innerHTML = `
+            IL 1° NUMERO SULLA PORTIERA È <strong class="text-rose-600 text-xl font-black">${round.num1}</strong>.<br>
+            MA SUL BUS CI SONO SOLO <strong class="text-rose-600 text-xl font-black">${coralCount}</strong> GETTONI ROSSI!<br><br>
+            👉 <strong>AGGIUNGI ALTRI ${round.num1 - coralCount} GETTONI ROSSI</strong> PRIMA DI CONTINUARE!
+          `;
+        } else {
+          retryExplanation.innerHTML = `
+            IL 1° NUMERO SULLA PORTIERA È <strong class="text-rose-600 text-xl font-black">${round.num1}</strong>.<br>
+            MA HAI MESSO TROPPI GETTONI ROSSI: CE NE SONO <strong class="text-rose-600 text-xl font-black">${coralCount}</strong>!<br><br>
+            👉 USA IL TASTO <strong>"ANNULLA ULTIMO GETTONE"</strong> PER TOGLIERNE ${coralCount - round.num1}!
+          `;
+        }
+        retryModal.classList.remove('hidden');
+        return;
+      }
+
+      // Caso 2: I rossi sono giusti, ma i blu (o il totale) sono errati
+      if (totalCount !== round.num2) {
+        playTryAgainSound();
+        if (totalCount < round.num2) {
+          const stillNeeded = round.num2 - totalCount;
+          retryExplanation.innerHTML = `
+            I GETTONI ROSSI (<span class="text-rose-600 font-black">${round.num1}</span>) SONO GIUSTI! 👏<br>
+            PERÒ IL TRAGUARDO È ARRIVARE A <strong class="text-sky-600 text-xl font-black">${round.num2}</strong>.<br>
+            ADESSO SUL BUS CI SONO SOLO <strong class="text-slate-800 text-xl font-black">${totalCount}</strong> GETTONI IN TOTALE!<br><br>
+            👉 <strong>METTI ANCORA ${stillNeeded} GETTONI BLU</strong> NEI FINESTRINI VUOTI!
+          `;
+        } else {
+          const excess = totalCount - round.num2;
+          retryExplanation.innerHTML = `
+            ATTENZIONE! IL TRAGUARDO È IL NUMERO <strong class="text-sky-600 text-xl font-black">${round.num2}</strong>.<br>
+            MA SUL BUS HAI RIEMPITO <strong class="text-slate-800 text-xl font-black">${totalCount}</strong> FINESTRINI (TROPPI)!<br><br>
+            👉 PREMI <strong>"ANNULLA ULTIMO GETTONE"</strong> PER TOGLIERE ${excess} GETTONI IN PIÙ!
+          `;
+        }
+        retryModal.classList.remove('hidden');
+        return;
+      }
+
+      // Se sia i rossi che il totale corrispondono: VITTORIA MERITATA!
+      handleRoundSuccess();
+    }
+
+    /* Vittoria della manche con spiegazione ed esultanza */
+    function handleRoundSuccess() {
+      currentStep = "SOLVED";
+      coralTokenBtn.disabled = true;
+      coralTokenBtn.classList.remove('pulse-glow-coral');
+      blueTokenBtn.disabled = true;
+      blueTokenBtn.classList.remove('pulse-glow-teal');
+      undoBtn.disabled = true;
+      checkAnswerBtn.classList.add('hidden');
+
+      const round = GAME_ROUNDS[currentRoundIndex];
+      const difference = round.num2 - round.num1;
+
+      playSuccessFanfare();
+      triggerConfetti();
+
+      const praise = POSITIVE_PRAISES[Math.floor(Math.random() * POSITIVE_PRAISES.length)];
+      modalTitle.textContent = praise;
+      
+      // Formula didattica evidente con i numeri in cifra e i cerchietti
+      modalSummaryFormula.innerHTML = `
+        <div class="flex items-center gap-2 bg-rose-100 text-rose-800 border-2 border-rose-400 px-4 py-2 rounded-2xl shadow-sm">
+          <span class="text-3xl font-black">${round.num1}</span>
+          <span class="text-xs font-bold text-rose-700">ROSSI</span>
+        </div>
+        <span class="text-3xl text-slate-500 font-black">+</span>
+        <div class="flex items-center gap-2 bg-sky-100 text-sky-800 border-2 border-sky-400 px-4 py-2 rounded-2xl shadow-sm animate-pulse">
+          <span class="text-3xl font-black">${difference}</span>
+          <span class="text-xs font-bold text-sky-700">BLU</span>
+        </div>
+        <span class="text-3xl text-slate-500 font-black">=</span>
+        <div class="flex items-center gap-2 bg-amber-100 text-amber-900 border-2 border-amber-400 px-4 py-2 rounded-2xl shadow-sm">
+          <span class="text-3xl font-black">${round.num2}</span>
+          <span class="text-xs font-bold text-amber-800">IN TOTALE</span>
+        </div>
+      `;
+
+      modalExplanation.textContent = `HAI RAGIONATO ALLA PERFEZIONE! AL NUMERO ${round.num1} MANCAVANO ESATTAMENTE ${difference} GETTONI PER ARRIVARE A ${round.num2}!`;
+
+      setTimeout(() => {
+        celebrationModal.classList.remove('hidden');
+      }, 350);
+    }
+
+    /* Passaggio alla manche successiva con partenza animata del bus */
+    function proceedToNextRound() {
+      celebrationModal.classList.add('hidden');
+
+      wheels.forEach(w => w.classList.add('wheel-spinning'));
+      busContainer.classList.add('bus-driving-out');
+
+      instructionText.textContent = "L'AUTOBUS PARTE FELICE! 🚍💨";
+      subInstructionText.textContent = "ATTENDI L'ARRIVO DELLA PROSSIMA SFIDA CON DUE NUOVI NUMERI...";
+
+      setTimeout(() => {
+        wheels.forEach(w => w.classList.remove('wheel-spinning'));
+        currentRoundIndex++;
+        if (currentRoundIndex < GAME_ROUNDS.length) {
+          startNewRound();
+        } else {
+          showFinalVictory();
+        }
+      }, 900);
+    }
+
+    /* Schermata finale di vittoria dopo 15 manche */
+    function showFinalVictory() {
+      playSuccessFanfare();
+      triggerGrandConfetti();
+
+      modalEmoji.textContent = "🏆";
+      modalTitle.textContent = "CAMPIONE ASSOLUTO DEL TEN FRAME!";
+      modalSummaryFormula.innerHTML = `
+        <div class="text-center font-black text-amber-800 text-xl">
+          🌟 HAI SUPERATO TUTTE LE 15 MANCHE SENZA TRUCCHI! 🌟
+        </div>
+      `;
+      modalExplanation.textContent = "CONOSCI PERFETTAMENTE QUANTO MANCA A QUALSIASI NUMERO PER ARRIVARE AL TRAGUARDO!";
+      modalNextBtn.textContent = "GIOCA ANCORA DALL'INIZIO! 🔄";
+      modalNextBtn.onclick = () => {
+        currentRoundIndex = 0;
+        celebrationModal.classList.add('hidden');
+        modalNextBtn.textContent = "CONTINUA IL VIAGGIO! ➔";
+        modalNextBtn.onclick = proceedToNextRound;
+        startNewRound();
+      };
+      celebrationModal.classList.remove('hidden');
+    }
+
+    /* Coriandoli */
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    function triggerGrandConfetti() {
+      if (typeof confetti === 'function') {
+        const count = 200;
+        const defaults = { origin: { y: 0.7 } };
+        function fire(particleRatio, opts) {
+          confetti(Object.assign({}, defaults, opts, {
+            particleCount: Math.floor(count * particleRatio)
+          }));
+        }
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
+      }
+    }
+
+    /* Event Listeners */
+    coralTokenBtn.addEventListener('click', handleAddCoralToken);
+    blueTokenBtn.addEventListener('click', handleAddBlueToken);
+    undoBtn.addEventListener('click', handleUndoToken);
+    modalNextBtn.addEventListener('click', proceedToNextRound);
+    checkAnswerBtn.addEventListener('click', handleCheckAnswer);
+    retryCloseBtn.addEventListener('click', () => {
+      retryModal.classList.add('hidden');
+    });
+
+    mainActionBtn.addEventListener('click', () => {
+      initAudio();
+      if (!roundActive) {
+        startNewRound();
+      }
+    });
+
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? "🔊" : "🔇";
+      soundToggleBtn.classList.toggle('bg-rose-100', !soundEnabled);
+    });
+
+    // Inizializza i finestrini del Ten Frame vuoti
+    renderTenFrameSlots();
+  </script>
+</body>
+</html>
